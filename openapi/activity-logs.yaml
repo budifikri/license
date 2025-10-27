@@ -1,0 +1,269 @@
+openapi: 3.0.0
+info:
+  title: License Management Dashboard API - Activity Logs
+  version: 1.0.0
+  description: Operations related to activity logs
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+tags:
+  - name: Activity Logs
+    description: Operations related to activity logs
+
+paths:
+  /api/activity-logs:
+    get:
+      summary: Get all activity logs
+      description: Retrieve a list of all activity logs
+      tags:
+        - Activity Logs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of activity logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    userId:
+                      type: string
+                    action:
+                      type: string
+                    resource:
+                      type: string
+                    resourceId:
+                      type: string
+                    ipAddress:
+                      type: string
+                    userAgent:
+                      type: string
+                    timestamp:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new activity log
+      tags:
+        - Activity Logs
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+                - resource
+              properties:
+                userId:
+                  type: string
+                  example: user123
+                action:
+                  type: string
+                  example: "create"
+                  description: "The action performed (e.g., create, update, delete, view)"
+                resource:
+                  type: string
+                  example: "user"
+                  description: "The resource that was acted upon"
+                resourceId:
+                  type: string
+                  example: "resource123"
+                ipAddress:
+                  type: string
+                  example: "192.168.1.1"
+                userAgent:
+                  type: string
+                  example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      responses:
+        '201':
+          description: Created activity log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  userId:
+                    type: string
+                  action:
+                    type: string
+                  resource:
+                    type: string
+                  resourceId:
+                    type: string
+                  ipAddress:
+                    type: string
+                  userAgent:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '400':
+          description: Invalid input
+
+  /api/activity-logs/{id}:
+    get:
+      summary: Get an activity log by ID
+      tags:
+        - Activity Logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The activity log ID
+      responses:
+        '200':
+          description: A single activity log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  userId:
+                    type: string
+                  action:
+                    type: string
+                  resource:
+                    type: string
+                  resourceId:
+                    type: string
+                  ipAddress:
+                    type: string
+                  userAgent:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Activity log not found
+    put:
+      summary: Update an activity log
+      tags:
+        - Activity Logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The activity log ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  example: user123
+                action:
+                  type: string
+                  example: "update"
+                resource:
+                  type: string
+                  example: "user"
+                resourceId:
+                  type: string
+                  example: "resource123"
+                ipAddress:
+                  type: string
+                  example: "192.168.1.1"
+                userAgent:
+                  type: string
+                  example: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+      responses:
+        '200':
+          description: Updated activity log
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  userId:
+                    type: string
+                  action:
+                    type: string
+                  resource:
+                    type: string
+                  resourceId:
+                    type: string
+                  ipAddress:
+                    type: string
+                  userAgent:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Activity log not found
+    delete:
+      summary: Delete an activity log
+      tags:
+        - Activity Logs
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The activity log ID
+      responses:
+        '204':
+          description: Activity log deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Activity log not found
+
+  /api/activity-logs/clear:
+    delete:
+      summary: Clear all activity logs
+      description: Delete all activity logs
+      tags:
+        - Activity Logs
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: All activity logs cleared successfully
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

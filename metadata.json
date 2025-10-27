@@ -1,0 +1,5 @@
+{
+  "name": "License Management Dashboard",
+  "description": "An admin dashboard to manage software licenses, products, plans, and activations. Features AI-powered content generation for product descriptions.",
+  "requestFramePermissions": []
+}

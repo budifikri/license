@@ -1,0 +1,173 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Bank {
+  id            String   @id @default(cuid())
+  name          String
+  accountNumber String
+  ownerName     String
+  invoices      Invoice[]
+}
+
+model Company {
+  id          String   @id @default(cuid())
+  name        String
+  address     String?
+  phone       String?
+  email       String?  @unique
+  website     String?
+  createdAt   DateTime @default(now())
+  users       User[]
+  invoices    Invoice[]
+}
+
+model Role {
+  id          String           @id @default(cuid())
+  name        String           @unique // admin, manager, user
+  description String?
+  users       User[]           @relation("UserRole")
+  permissions RolePermission[]
+  createdAt   DateTime         @default(now())
+}
+
+model Menu {
+  id        String           @id @default(cuid())
+  name      String           @unique // e.g., Dashboard, Product, User Management
+  path      String           @unique // frontend route
+  parentId  String?          // nullable, for nested menu
+  parent    Menu?            @relation("MenuChildren", fields: [parentId], references: [id], onDelete: Restrict)
+  children  Menu[]           @relation("MenuChildren")
+  order     Int              // display order
+  permissions RolePermission[]
+  createdAt DateTime         @default(now())
+}
+
+model RolePermission {
+  id          String  @id @default(cuid())
+  roleId      String
+  role        Role    @relation(fields: [roleId], references: [id], onDelete: Restrict)
+  menuId      String
+  menu        Menu    @relation(fields: [menuId], references: [id], onDelete: Restrict)
+  canView     Boolean @default(false)
+  canCreate   Boolean @default(false)
+  canEdit     Boolean @default(false)
+  canDelete   Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@unique([roleId, menuId]) // Each role can have only one permission per menu
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String?  // Hashed password (optional for now to maintain compatibility)
+  role      String?  // Admin, Manager, User (kept for backward compatibility)
+  roleId    String?  // FK to Role (nullable for backward compatibility)
+  roleRef   Role?    @relation("UserRole", fields: [roleId], references: [id], onDelete: Restrict)
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  createdAt DateTime @default(now())
+  licenses  LicenseKey[]
+  logs      ActivityLog[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String
+  plans       Plan[]
+  licenses    LicenseKey[]
+}
+
+model Plan {
+  id           String   @id @default(cuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  name         String
+  price        Int      // Using Int to represent price in cents or smallest currency unit
+  deviceLimit  Int
+  durationDays Int      // 0 for permanent
+  licenses     LicenseKey[]
+  invoiceItems InvoiceLineItem[]
+}
+
+model LicenseKey {
+  id         String   @id @default(cuid())
+  key        String   @unique
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+  planId     String
+  plan       Plan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  status     String   @default("Inactive") // Active, Inactive, Expired
+  expiresAt  DateTime?
+  createdAt  DateTime @default(now())
+  invoiceId  String?
+  invoice    Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  devices    Device[]
+}
+
+model Device {
+  id           String   @id @default(cuid())
+  licenseId    String
+  license      LicenseKey @relation(fields: [licenseId], references: [id], onDelete: Restrict)
+  computerId   String   // UUID for computer identification
+  name         String
+  processor    String?
+  os           String?
+  ram          String?
+  isActive     Boolean  @default(true)
+  activatedAt  DateTime @default(now())
+  lastSeenAt   DateTime @default(now())
+}
+
+model Invoice {
+  id            String            @id @default(cuid())
+  invoiceNumber String            @unique
+  companyId     String
+  company       Company           @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  issueDate     DateTime
+  dueDate       DateTime
+  total         Int               // Total in cents or smallest currency unit
+  status        String            @default("Unpaid") // Paid, Unpaid, Overdue
+  paymentMethod String            // Cash, Bank, Qris
+  bankId        String?
+  bank          Bank?             @relation(fields: [bankId], references: [id], onDelete: Restrict)
+  createdAt     DateTime          @default(now())
+  licenses      LicenseKey[]      // License keys associated with this invoice
+  lineItems     InvoiceLineItem[]
+}
+
+model InvoiceLineItem {
+  id             String   @id @default(cuid())
+  invoiceId      String
+  invoice        Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Restrict)
+  planId         String
+  plan           Plan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+  description    String
+  quantity       Int
+  unitPrice      Int      // Price per unit in cents
+  total          Int      // quantity * unitPrice
+  createdAt      DateTime @default(now())
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  action     String   // create, update, delete
+  entityType String   // Product, Plan, License, User, Company, Invoice, Device
+  entityName String
+  createdAt  DateTime @default(now())
+  details    Json?    // JSON field for additional information
+}

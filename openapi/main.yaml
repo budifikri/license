@@ -1,0 +1,82 @@
+openapi: 3.0.0
+info:
+  title: License Management Dashboard API
+  version: 1.0.0
+  description: API for managing software licenses, products, plans, invoices, and more
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+# The paths will be filled from the individual YAML files
+paths: {}
+
+tags:
+  - name: Products
+    description: Operations related to products
+  - name: Plans
+    description: Operations related to plans
+  - name: Companies
+    description: Operations related to companies
+  - name: Users
+    description: Operations related to users
+  - name: Licenses
+    description: Operations related to licenses
+  - name: Devices
+    description: Operations related to devices
+  - name: Invoices
+    description: Operations related to invoices
+  - name: Banks
+    description: Operations related to banks
+  - name: Activity Logs
+    description: Operations related to activity logs
+  - name: Auth
+    description: Authentication operations
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        companyId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+    Product:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+        productId:
+          type: string
+        name:
+          type: string
+        price:
+          type: integer
+        deviceLimit:
+          type: integer
+        durationDays:
+          type: integer

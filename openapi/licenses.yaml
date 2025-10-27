@@ -1,0 +1,338 @@
+openapi: 3.0.0
+info:
+  title: License Management Dashboard API - Licenses
+  version: 1.0.0
+  description: Operations related to licenses
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+tags:
+  - name: Licenses
+    description: Operations related to licenses
+
+paths:
+  /api/licenses:
+    get:
+      summary: Get all licenses
+      description: Retrieve a list of all licenses
+      tags:
+        - Licenses
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of licenses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    key:
+                      type: string
+                    planId:
+                      type: string
+                    userId:
+                      type: string
+                    status:
+                      type: string
+                      enum: [Active, Inactive, Expired]
+                    expiresAt:
+                      type: string
+                      format: date-time
+                    createdAt:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new license
+      tags:
+        - Licenses
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - key
+              properties:
+                key:
+                  type: string
+                  example: LIC-12345-ABCDE
+                planId:
+                  type: string
+                  example: plan123
+                userId:
+                  type: string
+                  example: user123
+                expiresAt:
+                  type: string
+                  format: date-time
+                  example: "2024-12-31T23:59:59.000Z"
+      responses:
+        '201':
+          description: Created license
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  key:
+                    type: string
+                  planId:
+                    type: string
+                  userId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [Active, Inactive, Expired]
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '400':
+          description: Invalid input
+
+  /api/licenses/{id}:
+    get:
+      summary: Get a license by ID
+      tags:
+        - Licenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The license ID
+      responses:
+        '200':
+          description: A single license
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  key:
+                    type: string
+                  planId:
+                    type: string
+                  userId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [Active, Inactive, Expired]
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: License not found
+    put:
+      summary: Update a license
+      tags:
+        - Licenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The license ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                key:
+                  type: string
+                  example: LIC-12345-ABCDE
+                planId:
+                  type: string
+                  example: plan123
+                userId:
+                  type: string
+                  example: user123
+                status:
+                  type: string
+                  enum: [Active, Inactive, Expired]
+                expiresAt:
+                  type: string
+                  format: date-time
+                  example: "2024-12-31T23:59:59.000Z"
+      responses:
+        '200':
+          description: Updated license
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  key:
+                    type: string
+                  planId:
+                    type: string
+                  userId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [Active, Inactive, Expired]
+                  expiresAt:
+                    type: string
+                    format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: License not found
+    delete:
+      summary: Delete a license
+      tags:
+        - Licenses
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The license ID
+      responses:
+        '204':
+          description: License deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: License not found
+
+  /api/licenses/activate:
+    post:
+      summary: Activate a license
+      description: Activate a license for a specific device
+      tags:
+        - Licenses
+      parameters: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - licenseKey
+                - device
+              properties:
+                licenseKey:
+                  type: string
+                  example: LIC-12345-ABCDE
+                productName:
+                  type: string
+                  example: "Software Product Name"
+                device:
+                  type: object
+                  properties:
+                    computerId:
+                      type: string
+                      example: "computer-123456"
+                    name:
+                      type: string
+                      example: "My Computer"
+                    os:
+                      type: string
+                      example: "Windows 10"
+                    processor:
+                      type: string
+                      example: "Intel i7"
+                    ram:
+                      type: integer
+                      example: 16
+      responses:
+        '200':
+          description: License activated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  message:
+                    type: string
+                  license:
+                    type: object
+                    properties:
+                      key:
+                        type: string
+                      isActive:
+                        type: boolean
+                      expiresAt:
+                        type: string
+                        format: date-time
+                  device:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      licenseId:
+                        type: string
+                      computerId:
+                        type: string
+                      name:
+                        type: string
+                      os:
+                        type: string
+                      processor:
+                        type: string
+                      ram:
+                        type: integer
+                      isActive:
+                        type: boolean
+                      activatedAt:
+                        type: string
+                        format: date-time
+                      lastSeenAt:
+                        type: string
+                        format: date-time
+        '400':
+          description: Invalid input or license activation failed
+        '404':
+          description: License not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

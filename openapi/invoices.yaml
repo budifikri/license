@@ -1,0 +1,502 @@
+openapi: 3.0.0
+info:
+  title: License Management Dashboard API - Invoices
+  version: 1.0.0
+  description: Operations related to invoices
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+tags:
+  - name: Invoices
+    description: Operations related to invoices
+
+paths:
+  /api/invoices:
+    get:
+      summary: Get all invoices
+      description: Retrieve a list of all invoices
+      tags:
+        - Invoices
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: A list of invoices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    invoiceNumber:
+                      type: string
+                    companyId:
+                      type: string
+                    company:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        address:
+                          type: string
+                        phone:
+                          type: string
+                        email:
+                          type: string
+                        website:
+                          type: string
+                        createdAt:
+                          type: string
+                          format: date-time
+                    issueDate:
+                      type: string
+                      format: date
+                    dueDate:
+                      type: string
+                      format: date
+                    total:
+                      type: number
+                    status:
+                      type: string
+                      enum: [Paid, Unpaid, Overdue]
+                    paymentMethod:
+                      type: string
+                      example: "Bank"
+                    bankId:
+                      type: string
+                    bank:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        accountNumber:
+                          type: string
+                        ownerName:
+                          type: string
+                    lineItems:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          planId:
+                            type: string
+                          description:
+                            type: string
+                          quantity:
+                            type: integer
+                          unitPrice:
+                            type: number
+                          total:
+                            type: number
+                          plan:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                              productId:
+                                type: string
+                              name:
+                                type: string
+                              price:
+                                type: number
+                              deviceLimit:
+                                type: integer
+                              durationDays:
+                                type: integer
+                    licenses:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          key:
+                            type: string
+                          productId:
+                            type: string
+                          planId:
+                            type: string
+                          userId:
+                            type: string
+                          status:
+                            type: string
+                          expiresAt:
+                            type: string
+                            format: date-time
+                          createdAt:
+                            type: string
+                            format: date-time
+                    createdAt:
+                      type: string
+                      format: date-time
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new invoice
+      tags:
+        - Invoices
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - companyId
+                - issueDate
+                - dueDate
+              properties:
+                invoiceNumber:
+                  type: string
+                  example: "INV-638067"
+                companyId:
+                  type: string
+                  example: "cmh1hjf8400032pj0lkvhmdlx"
+                issueDate:
+                  type: string
+                  format: date-time
+                  example: "2025-10-26T00:00:00.000Z"
+                dueDate:
+                  type: string
+                  format: date-time
+                  example: "2025-11-25T00:00:00.000Z"
+                total:
+                  type: number
+                  example: 1485000
+                paymentMethod:
+                  type: string
+                  example: "Bank"
+                bankId:
+                  type: string
+                  example: "cmh1hjf7k00002pj0npwrvpzj"
+                lineItems:
+                  type: array
+                  description: Array of invoice line items
+                  items:
+                    type: object
+                    required:
+                      - planId
+                      - description
+                      - quantity
+                      - unitPrice
+                      - total
+                    properties:
+                      planId:
+                        type: string
+                        example: "cmh1hjfab000f2pj096xx0zfs"
+                      description:
+                        type: string
+                        example: "NexusDB - Pro"
+                      quantity:
+                        type: integer
+                        example: 1
+                      unitPrice:
+                        type: number
+                        example: 1485000
+                      total:
+                        type: number
+                        example: 1485000
+      responses:
+        '201':
+          description: Created invoice
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  invoiceNumber:
+                    type: string
+                  companyId:
+                    type: string
+                  company:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      address:
+                        type: string
+                      phone:
+                        type: string
+                      email:
+                        type: string
+                      website:
+                        type: string
+                      createdAt:
+                        type: string
+                        format: date-time
+                  issueDate:
+                    type: string
+                    format: date
+                  dueDate:
+                    type: string
+                    format: date
+                  total:
+                    type: number
+                  status:
+                    type: string
+                    enum: [Paid, Unpaid, Overdue]
+                  paymentMethod:
+                    type: string
+                    example: "Bank"
+                  bankId:
+                    type: string
+                  bank:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      accountNumber:
+                        type: string
+                      ownerName:
+                        type: string
+                  lineItems:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        planId:
+                          type: string
+                        description:
+                          type: string
+                        quantity:
+                          type: integer
+                        unitPrice:
+                          type: number
+                        total:
+                          type: number
+                        plan:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            productId:
+                              type: string
+                            name:
+                              type: string
+                            price:
+                              type: number
+                            deviceLimit:
+                              type: integer
+                            durationDays:
+                              type: integer
+                  licenses:
+                    type: array
+                    items:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+                          key:
+                            type: string
+                          productId:
+                            type: string
+                          planId:
+                            type: string
+                          userId:
+                            type: string
+                          status:
+                            type: string
+                          expiresAt:
+                            type: string
+                            format: date-time
+                          createdAt:
+                            type: string
+                            format: date-time
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '400':
+          description: Invalid input
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "companyId is required"
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "Failed to create invoice"
+                  details:
+                    type: string
+                    example: "Error message details"
+
+  /api/invoices/{id}:
+    get:
+      summary: Get an invoice by ID
+      tags:
+        - Invoices
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The invoice ID
+      responses:
+        '200':
+          description: A single invoice
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  amount:
+                    type: number
+                    format: float
+                  date:
+                    type: string
+                    format: date
+                  dueDate:
+                    type: string
+                    format: date
+                  status:
+                    type: string
+                    enum: [Paid, Unpaid, Overdue]
+                  companyId:
+                    type: string
+                  bankId:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Invoice not found
+    put:
+      summary: Update an invoice
+      tags:
+        - Invoices
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The invoice ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  example: 129.99
+                date:
+                  type: string
+                  format: date
+                  example: "2023-12-01"
+                dueDate:
+                  type: string
+                  format: date
+                  example: "2023-12-15"
+                status:
+                  type: string
+                  enum: [Paid, Unpaid, Overdue]
+                companyId:
+                  type: string
+                  example: company123
+                bankId:
+                  type: string
+                  example: bank123
+      responses:
+        '200':
+          description: Updated invoice
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  amount:
+                    type: number
+                    format: float
+                  date:
+                    type: string
+                    format: date
+                  dueDate:
+                    type: string
+                    format: date
+                  status:
+                    type: string
+                    enum: [Paid, Unpaid, Overdue]
+                  companyId:
+                    type: string
+                  bankId:
+                    type: string
+                  createdAt:
+                    type: string
+                    format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Invoice not found
+    delete:
+      summary: Delete an invoice
+      tags:
+        - Invoices
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The invoice ID
+      responses:
+        '204':
+          description: Invoice deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Invoice not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

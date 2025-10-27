@@ -1,0 +1,327 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Loader2, CheckCircle, XCircle, Computer, Package, Building } from 'lucide-react';
+import Link from 'next/link';
+
+interface DeviceInfo {
+  computerId: string;
+  name: string;
+  os: string;
+  processor: string;
+  ram: string;
+}
+
+interface Product {
+  id: string;
+  name: string;
+  description: string;
+  price?: number;
+  duration?: string;
+  features?: string[];
+}
+
+// Default products as fallback
+const defaultProducts: Product[] = [
+  {
+    id: 'nexusdb-basic',
+    name: 'NexusDB Basic',
+    description: 'Database management system untuk personal dan small business',
+    price: 299000,
+    duration: '1 tahun',
+    features: ['Max 3 devices', 'Basic support', 'Monthly updates']
+  },
+  {
+    id: 'nexusdb-pro',
+    name: 'NexusDB Professional',
+    description: 'Database management system untuk enterprise dengan fitur lengkap',
+    price: 599000,
+    duration: '1 tahun',
+    features: ['Max 5 devices', 'Priority support', 'Weekly updates', 'Advanced features']
+  },
+  {
+    id: 'nexusdb-enterprise',
+    name: 'NexusDB Enterprise',
+    description: 'Solusi database terlengkap untuk large enterprise',
+    price: 1299000,
+    duration: '1 tahun',
+    features: ['Unlimited devices', '24/7 support', 'Real-time updates', 'Custom features']
+  }
+];
+
+const PaymentPage = () => {
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+  const [products, setProducts] = useState<Product[]>(defaultProducts);
+  const [productsLoading, setProductsLoading] = useState(false);
+  const [productsError, setProductsError] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  // Generate computer ID
+  const generateComputerId = () => {
+    const timestamp = Date.now().toString();
+    const random = Math.random().toString(36).substring(2);
+    return btoa(timestamp + random).replace(/[^a-zA-Z0-9]/g, '').substring(0, 12);
+  };
+
+  // Get device info
+  const getDeviceInfo = (): DeviceInfo => {
+    const userAgent = navigator.userAgent;
+    let os = 'Unknown';
+    
+    if (userAgent.includes('Windows')) os = 'Windows';
+    else if (userAgent.includes('Mac')) os = 'macOS';
+    else if (userAgent.includes('Linux')) os = 'Linux';
+    else if (userAgent.includes('Android')) os = 'Android';
+    else if (userAgent.includes('iOS')) os = 'iOS';
+
+    const ramOptions = ['8GB', '16GB', '32GB', '64GB'];
+    const processorOptions = ['Intel Core i5', 'Intel Core i7', 'AMD Ryzen 5', 'AMD Ryzen 7', 'Apple M1', 'Apple M2'];
+    
+    return {
+      computerId: generateComputerId(),
+      name: 'My-PC',
+      os: os,
+      processor: processorOptions[Math.floor(Math.random() * processorOptions.length)],
+      ram: ramOptions[Math.floor(Math.random() * ramOptions.length)]
+    };
+  };
+
+  // Fetch products and plans from API
+  const fetchProducts = async () => {
+    setProductsLoading(true);
+    setProductsError('');
+    
+    try {
+      // Fetch product data
+      const specificProductId = process.env.NEXT_PUBLIC_PRODUCT_ID || 'cmh1hjf9o000b2pj0sc00i4lu';
+      const productResponse = await fetch(`/api/products/${specificProductId}`);
+      
+      // Fetch plan data using the new API endpoint with productId parameter
+      const plansResponse = await fetch(`/api/plans?productId=${specificProductId}`);
+      
+      let productData = null;
+      let plansData: any[] = [];
+      
+      // Get product data
+      if (productResponse.ok) {
+        productData = await productResponse.json();
+        console.log('Product data from API:', productData);
+      }
+      
+      // Get plans data
+      if (plansResponse.ok) {
+        plansData = await plansResponse.json();
+        console.log('Plans data from API:', plansData);
+      }
+      
+      // Create enhanced products with plan data
+      if (productData && plansData.length > 0) {
+        const enhancedProducts: Product[] = plansData.map((plan: any) => ({
+          ...productData,
+          id: plan.id, // Use plan ID as product ID to differentiate plans
+          name: `${productData.name} - ${plan.name}`, // Combine product and plan names
+          price: plan.price,
+          duration: plan.durationDays > 0 ? `${plan.durationDays} hari` : 'Unlimited',
+          features: [
+            `Max ${plan.deviceLimit} device${plan.deviceLimit > 1 ? 's' : ''}`,
+            'Priority support',
+            'Weekly updates',
+            'Advanced features'
+          ]
+        }));
+        
+        setProducts(enhancedProducts);
+        setSuccess('Produk dan lisensi berhasil dimuat dari server!');
+      } else if (productData) {
+        // Product available but no plan data
+        const apiProduct: Product = {
+          ...productData,
+          price: 599000, // Default price
+          duration: '1 tahun',
+          features: ['Max 5 devices', 'Priority support', 'Weekly updates', 'Advanced features']
+        };
+        
+        setProducts([apiProduct]);
+        setSuccess('Produk berhasil dimuat dari server!');
+      } else {
+        // Fallback to default products
+        console.log('Using default products as fallback');
+        setProducts(defaultProducts);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProductsError('Gagal memuat produk dari server. Menggunakan data default.');
+      setProducts(defaultProducts);
+    } finally {
+      setProductsLoading(false);
+    }
+  };
+
+  // Handle product selection
+  const handleProductSelect = (product: Product) => {
+    // Ensure product has required pricing info
+    const productWithPricing: Product = {
+      ...product,
+      price: product.price || 599000, // Default price if not provided
+      duration: product.duration || '1 tahun',
+      features: product.features || ['Max 5 devices', 'Priority support', 'Weekly updates']
+    };
+    
+    setSelectedProduct(productWithPricing);
+    
+    // Navigate to invoice page with product info in URL or state
+    const productInfo = JSON.stringify(productWithPricing);
+    window.location.href = `/invoice?product=${encodeURIComponent(productInfo)}`;
+  };
+
+  // Format currency
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR'
+    }).format(amount);
+  };
+
+  // Initialize
+  useEffect(() => {
+    const info = getDeviceInfo();
+    setDeviceInfo(info);
+    console.log('Device Info:', info);
+    
+    // Fetch products from API
+    fetchProducts();
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+      <div className="max-w-4xl mx-auto">
+        <div className="text-center mb-8 pt-8">
+          <div className="flex items-center justify-center gap-3 mb-4">
+            <Package className="w-8 h-8 text-blue-600" />
+            <h1 className="text-2xl font-bold text-slate-900">Pembayaran Lisensi</h1>
+          </div>
+          <p className="text-slate-600">Pilih paket lisensi yang sesuai dengan kebutuhan Anda</p>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5" />
+                Pilih Produk Lisensi
+              </CardTitle>
+              <CardDescription>
+                Pilih paket lisensi yang sesuai dengan kebutuhan Anda
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {productsLoading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                  <span>Memuat produk...</span>
+                </div>
+              ) : productsError ? (
+                <Alert variant="destructive">
+                  <XCircle className="h-4 w-4" />
+                  <AlertDescription>{productsError}</AlertDescription>
+                </Alert>
+              ) : (
+                <div className="space-y-4">
+                  {products.map((product) => (
+                    <Card key={product.id} className="cursor-pointer hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h3 className="font-semibold text-lg">{product.name}</h3>
+                            <p className="text-sm text-slate-600 mb-2">{product.description}</p>
+                            {product.features && (
+                              <div className="text-xs text-slate-500 space-y-1">
+                                {product.features.map((feature, index) => (
+                                  <p key={index}>• {feature}</p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            {product.price && (
+                              <>
+                                <p className="text-xl font-bold text-blue-600">{formatCurrency(product.price)}</p>
+                                <p className="text-xs text-slate-500">{product.duration || '1 tahun'}</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        <Button 
+                          onClick={() => handleProductSelect(product)}
+                          className="w-full mt-3"
+                        >
+                          Pilih Paket Ini
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {deviceInfo && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Computer className="w-5 h-5" />
+                  Informasi Perangkat
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-sm text-slate-600 space-y-1">
+                  <p><span className="font-medium">Computer ID:</span> {deviceInfo.computerId}</p>
+                  <p><span className="font-medium">OS:</span> {deviceInfo.os}</p>
+                  <p><span className="font-medium">Processor:</span> {deviceInfo.processor}</p>
+                  <p><span className="font-medium">RAM:</span> {deviceInfo.ram}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {error && (
+          <div className="max-w-md mx-auto mt-4">
+            <Alert variant="destructive">
+              <XCircle className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {success && (
+          <div className="max-w-md mx-auto mt-4">
+            <Alert className="border-green-200 bg-green-50 text-green-800">
+              <CheckCircle className="h-4 w-4" />
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        <div className="text-center mt-8">
+          <Link href="/login">
+            <Button variant="outline">
+              Kembali ke Login
+            </Button>
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default PaymentPage;

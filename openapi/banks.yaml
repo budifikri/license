@@ -1,0 +1,223 @@
+openapi: 3.0.0
+info:
+  title: License Management Dashboard API - Banks
+  version: 1.0.0
+  description: Operations related to banks
+
+servers:
+  - url: http://localhost:5000
+    description: Development server
+
+tags:
+  - name: Banks
+    description: Operations related to banks
+
+paths:
+  /api/banks:
+    get:
+      summary: Get all banks
+      description: Retrieve a list of all banks
+      tags:
+        - Banks
+      responses:
+        '200':
+          description: A list of banks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+                    code:
+                      type: string
+                    swiftCode:
+                      type: string
+                    branch:
+                      type: string
+                    address:
+                      type: string
+        '401':
+          description: Unauthorized
+    post:
+      summary: Create a new bank
+      tags:
+        - Banks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - code
+              properties:
+                name:
+                  type: string
+                  example: "Bank Central Asia"
+                code:
+                  type: string
+                  example: "BCA"
+                swiftCode:
+                  type: string
+                  example: "CENAIDJA"
+                branch:
+                  type: string
+                  example: "Jakarta Central"
+                address:
+                  type: string
+                  example: "Jl. Jend. Sudirman Kav. 1, Jakarta"
+      responses:
+        '201':
+          description: Created bank
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  code:
+                    type: string
+                  swiftCode:
+                    type: string
+                  branch:
+                    type: string
+                  address:
+                    type: string
+        '401':
+          description: Unauthorized
+        '400':
+          description: Invalid input
+
+  /api/banks/{id}:
+    get:
+      summary: Get a bank by ID
+      tags:
+        - Banks
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The bank ID
+      responses:
+        '200':
+          description: A single bank
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  code:
+                    type: string
+                  swiftCode:
+                    type: string
+                  branch:
+                    type: string
+                  address:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Bank not found
+    put:
+      summary: Update a bank
+      tags:
+        - Banks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The bank ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Bank Mandiri"
+                code:
+                  type: string
+                  example: "BM"
+                swiftCode:
+                  type: string
+                  example: "BMRIIDJA"
+                branch:
+                  type: string
+                  example: "Jakarta Pusat"
+                address:
+                  type: string
+                  example: "Jl. Jend. Gatot Subroto Kav. 18, Jakarta"
+      responses:
+        '200':
+          description: Updated bank
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  code:
+                    type: string
+                  swiftCode:
+                    type: string
+                  branch:
+                    type: string
+                  address:
+                    type: string
+        '401':
+          description: Unauthorized
+        '404':
+          description: Bank not found
+    delete:
+      summary: Delete a bank
+      tags:
+        - Banks
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: The bank ID
+      responses:
+        '204':
+          description: Bank deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Bank not found
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
