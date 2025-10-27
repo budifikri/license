@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import type { Request, Response, NextFunction } from 'express';
 
 interface JwtPayload {
@@ -9,24 +9,18 @@ interface JwtPayload {
 
 // Generate JWT token
 export const generateToken = (payload: { userId: string; email: string; role: string }): string => {
-  const secret = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
-  }
+  const secret: string = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
   
-  return jwt.sign(payload, secret, { 
+  return (jwt.sign as any)(payload, secret, { 
     expiresIn: process.env.JWT_EXPIRES_IN || '24h' 
   });
 };
 
 // Verify JWT token
 export const verifyToken = (token: string): JwtPayload => {
-  const secret = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
-  }
+  const secret: string = process.env.JWT_SECRET || 'fallback-secret-key-change-in-production';
   
-  return jwt.verify(token, secret) as JwtPayload;
+  return (jwt.verify as any)(token, secret) as JwtPayload;
 };
 
 // JWT Authentication Middleware

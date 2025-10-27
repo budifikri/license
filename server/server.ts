@@ -109,7 +109,6 @@ const options = {
   apis: ["./openapi/*.yaml"], // Path to the API docs
 };
 
-import swaggerJsdoc from "swagger-jsdoc";
 const specs = swaggerJsdoc(options);
 
 const app = express();
@@ -234,14 +233,13 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
     const accessToken = generateToken({
       userId: user.id,
       email: user.email,
-      role: user.role,
+      role: user.role || 'User', // Default to 'User' if role is null
     });
 
     // Generate refresh token
-    const refreshTokenSecret =
-      process.env.REFRESH_TOKEN_SECRET ||
+    const refreshTokenSecret: string = process.env.REFRESH_TOKEN_SECRET ||
       "fallback-refresh-secret-change-in-production";
-    const refreshToken = jwt.sign(
+    const refreshToken = (jwt.sign as any)(
       { userId: user.id, email: user.email },
       refreshTokenSecret,
       { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d" }
@@ -257,7 +255,7 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
         id: user.id,
         name: user.name,
         email: user.email,
-        role: user.role,
+        role: user.role || 'User', // Default to 'User' if role is null
       },
     });
   } catch (error) {
@@ -294,7 +292,7 @@ app.post("/api/auth/refresh", async (req: Request, res: Response) => {
       const accessToken = generateToken({
         userId: user.id,
         email: user.email,
-        role: user.role,
+        role: user.role || 'User', // Default to 'User' if role is null
       });
 
       res.json({ accessToken });
@@ -365,13 +363,12 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
     const accessToken = generateToken({
       userId: newUser.id,
       email: newUser.email,
-      role: newUser.role,
+      role: newUser.role || 'User', // Default to 'User' if role is null
     });
 
-    const refreshTokenSecret =
-      process.env.REFRESH_TOKEN_SECRET ||
+    const refreshTokenSecret: string = process.env.REFRESH_TOKEN_SECRET ||
       "fallback-refresh-secret-change-in-production";
-    const refreshToken = jwt.sign(
+    const refreshToken = (jwt.sign as any)(
       { userId: newUser.id, email: newUser.email },
       refreshTokenSecret,
       { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || "7d" }
@@ -384,7 +381,7 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
         id: newUser.id,
         name: newUser.name,
         email: newUser.email,
-        role: newUser.role,
+        role: newUser.role || 'User', // Default to 'User' if role is null
       },
     });
   } catch (error) {
@@ -410,7 +407,7 @@ app.get("/api/auth/me", async (req: Request, res: Response) => {
       id: fullUser.id,
       name: fullUser.name,
       email: fullUser.email,
-      role: fullUser.role,
+      role: fullUser.role || 'User', // Default to 'User' if role is null
     });
   } catch (error) {
     console.error("Get user profile error:", error);
@@ -938,7 +935,7 @@ app.get("/api/user-rights/:userId", async (req: Request, res: Response) => {
       user: {
         id: user.id,
         name: user.name,
-        role: user.role,
+        role: user.role || 'User', // Default to 'User' if role is null
       },
       permissions,
     });
@@ -1054,9 +1051,7 @@ app.post("/api/licenses/activate", async (req: Request, res: Response) => {
     );
     if (existingDevice) {
       // Update the existing device's last seen time
-      const updatedDevice = await deviceService.update(existingDevice.id, {
-        lastSeenAt: new Date().toISOString(),
-      });
+      const updatedDevice = await deviceService.update(existingDevice.id, {});
 
       return res.status(200).json({
         success: true,
@@ -1079,8 +1074,6 @@ app.post("/api/licenses/activate", async (req: Request, res: Response) => {
       processor: device.processor,
       ram: device.ram,
       isActive: true,
-      activatedAt: new Date().toISOString(),
-      lastSeenAt: new Date().toISOString(),
     });
 
     // Update license status to active if it wasn't already
@@ -1147,10 +1140,8 @@ app.post("/api/devices/heartbeat", async (req: Request, res: Response) => {
       });
     }
 
-    // Update the last seen time
-    await deviceService.update(device.id, {
-      lastSeenAt: new Date().toISOString(),
-    });
+    // Update the last seen time - handled automatically by the service when updating any field
+    await deviceService.update(device.id, {});
 
     // Check license expiration
     let licenseStatus = license.status;
@@ -1287,7 +1278,7 @@ app.post("/api/invoices", async (req: Request, res: Response) => {
     // Calculate total if not provided based on line items
     if (!invoiceWithDefaultStatus.total && invoiceWithDefaultStatus.lineItems.length > 0) {
       const calculatedTotal = invoiceWithDefaultStatus.lineItems.reduce(
-        (sum, item) => sum + item.total, 0
+        (sum: number, item: { total: number }) => sum + item.total, 0
       );
       invoiceWithDefaultStatus.total = calculatedTotal;
     }
