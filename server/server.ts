@@ -2,7 +2,7 @@ import express, { Request, Response, NextFunction } from "express";
 import cors from "cors";
 import swaggerUi from "swagger-ui-express";
 import swaggerJsdoc from "swagger-jsdoc";
-import { openApiSpec } from "../docs/openapi.loader";
+import { openApiSpec } from "../docs/openapi.loader.js";
 import path from "path";
 import { fileURLToPath } from "url";
 import bcrypt from "bcrypt";
@@ -20,10 +20,10 @@ import {
   roleService,
   menuService,
   rolePermissionService,
-} from "./services";
-import { generateToken, verifyToken } from "../lib/auth/jwt";
+} from "./services.js";
+import * as jwtUtils from "../lib/auth/jwt.js";
 import jwt from "jsonwebtoken";
-import { getFullDeviceInfo } from "../utils/device-info";
+import { getFullDeviceInfo } from "../utils/device-info.js";
 
 const db = new PrismaClient();
 
@@ -116,7 +116,7 @@ const PORT = parseInt(process.env.PORT || "5000");
 const BACKEND_HOST = process.env.BACKEND_HOST || "localhost";
 
 // JWT Authentication Middleware
-import { authenticateJWT } from "../lib/auth/jwt";
+import { authenticateJWT } from "../lib/auth/jwt.js";
 
 // Public endpoints that don't require authentication
 const publicEndpoints = [
@@ -230,7 +230,7 @@ app.post("/api/auth/login", async (req: Request, res: Response) => {
     }
 
     // Generate tokens
-    const accessToken = generateToken({
+    const accessToken = jwtUtils.generateToken({
       userId: user.id,
       email: user.email,
       role: user.role || 'User', // Default to 'User' if role is null
@@ -289,7 +289,7 @@ app.post("/api/auth/refresh", async (req: Request, res: Response) => {
       }
 
       // Generate new access token
-      const accessToken = generateToken({
+      const accessToken = jwtUtils.generateToken({
         userId: user.id,
         email: user.email,
         role: user.role || 'User', // Default to 'User' if role is null
@@ -360,7 +360,7 @@ app.post("/api/auth/register", async (req: Request, res: Response) => {
     });
 
     // Generate tokens for the newly registered user
-    const accessToken = generateToken({
+    const accessToken = jwtUtils.generateToken({
       userId: newUser.id,
       email: newUser.email,
       role: newUser.role || 'User', // Default to 'User' if role is null
@@ -1446,11 +1446,15 @@ app.use((err: Error, req: Request, res: Response, next: Function) => {
   res.status(500).json({ error: "Something went wrong!" });
 });
 
-// Serve static files from the dist folder
-app.use(express.static(path.join(__dirname, "../dist")));
+// Determine the correct static directory based on whether we're running from src or dist
+// If __dirname contains 'dist', we're running from a compiled version, so go up one more level
+const isCompiled = __dirname.includes('dist');
+const staticDir = isCompiled 
+  ? path.join(__dirname, "../../dist")  // Go up two levels if running from dist/server
+  : path.join(__dirname, "../dist");    // Go up one level if running from server/
 
-// Serve Swagger documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+// Serve static files from the dist folder
+app.use(express.static(staticDir));
 
 // Health check endpoint
 app.get("/health", (req: Request, res: Response) => {
@@ -1468,12 +1472,9 @@ app.get("*", (req: Request, res: Response) => {
     res.status(404).json({ error: "Route not found" });
   } else {
     // For all other routes, serve the frontend
-    res.sendFile(path.join(__dirname, "../dist/index.html"));
+    res.sendFile(path.join(staticDir, "index.html"));
   }
 });
-
-// Serve Swagger documentation
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 // Start server
 const port = parseInt(process.env.PORT || "5000"); // Changed back to port 5000

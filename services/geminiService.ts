@@ -10,7 +10,7 @@ export const generateDescription = async (productName: string): Promise<string> 
         contents: `Generate a short, compelling marketing description for a software product named "${productName}". Keep it under 50 words.`,
     });
     
-    return response.text;
+    return response.text || "Failed to generate description.";
   } catch (error) {
     console.error("Error generating description with Gemini API:", error);
     throw new Error("Failed to generate description. Please check your API key and network connection.");
